@@ -1,19 +1,23 @@
 import jwt from "jsonwebtoken";
 import client from "../client";
 
-export const getUser = async (token) => {
+
+// 받은 토큰을 이용해서 로그인한 사용자의 정보를 가져오는 함수
+export const handleGetUser = async (token) => {
   try {
     if (!token) {
       return null;
     }
     const { id } = await jwt.verify(token, process.env.SECRET_KEY);
-    const user = await client.user.findUnique({ where: { id } });
-    if (user) {
-      return user;
+    const loggedInUser = await client.user.findUnique({ where: { id } });
+
+    if (loggedInUser) {
+      return loggedInUser;
     } else {
       return null;
     }
-  } catch {
+  } catch (error) {
+    console.log("handleGetUser error", error);
     return null;
   }
 };
