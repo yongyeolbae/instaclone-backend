@@ -1,7 +1,6 @@
 import jwt from "jsonwebtoken";
 import client from "../client";
 
-
 // 받은 토큰을 이용해서 로그인한 사용자의 정보를 가져오는 함수
 export const handleGetUser = async (token) => {
   try {
@@ -22,19 +21,19 @@ export const handleGetUser = async (token) => {
   }
 };
 
-export function protectedResolver(ourResolver) {
-  return function (root, args, context, info) {
-    if (!context.loggedInUser) {
-      const query = info.operation.operation === "query";
-      if (query) {
-        return null;
-      } else {
-        return {
-          ok: false,
-          error: "Please log in to perform this action.",
-        };
-      }
+// 로그인을 하지 않은 유저가 Mutation을 했을 때, 예외 처리를 해주기 위한 함수
+export const protectedResolver = (resolver) => (root, args, context, info) => {
+  if (context.loggedInUser === null) {
+    // resolver함수의 4번째 인자인 info에서 현재 GraphQL에 request한 것이 Query인지 Mutation인지 알 수 있다.
+    // 그래서 Query일 때는, 다른 값을 리턴하게 할 수 있다.
+    const {
+      operation: { operation },
+    } = info;
+
+    if (operation === "query") {
+      return { ok: false, error: "피드를 보려면 로그인이 필요합니다." };
     }
-    return ourResolver(root, args, context, info);
-  };
-}
+    return { ok: false, error: "로그인이 필요합니다." };
+  }
+  return resolver(root, args, context, info);
+};
